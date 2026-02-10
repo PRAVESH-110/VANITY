@@ -1,10 +1,21 @@
-export default function StepRenderer({ step }: any) {
+export default function StepRenderer({ step, onNext }: any) {
+  if (!step) return null;
+
   if (step.type === "info") {
-    return <p>{step.title}</p>;
+    return (
+      <div>
+        <p>{step.title}</p>
+        <button onClick={onNext}>Next</button>
+      </div>
+    );
   }
 
   if (step.type === "action") {
-    return <button>{step.title}</button>;
+    return (
+      <div>
+        <button onClick={onNext}>{step.title}</button>
+      </div>
+    );
   }
 
   return null;
