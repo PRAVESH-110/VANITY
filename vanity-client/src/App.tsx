@@ -1,0 +1,77 @@
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider, AuthContext } from "./context/AuthContext";
+import { useContext } from "react";
+
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import Onboarding from "./pages/Onboarding";
+import Dashboard from "./pages/Dashboard";
+import ProjectDetails from "./pages/ProjectDetails";
+import Layout from "./components/Layout";
+
+/* 🔐 Private Route */
+const PrivateRoute = ({ children }: { children: JSX.Element }) => {
+  const { user } = useContext(AuthContext);
+  return user ? children : <Navigate to="/login" replace />;
+};
+
+/* 🔓 Public Route */
+const PublicRoute = ({ children }: { children: JSX.Element }) => {
+  const { user } = useContext(AuthContext);
+  return user ? <Navigate to="/dashboard" replace /> : children;
+};
+
+function App() {
+  return (
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+
+          <Route path="/" element={<Navigate to="/login" replace />} />
+
+          <Route
+            path="/login"
+            element={
+              <PublicRoute>
+                <Login />
+              </PublicRoute>
+            }
+          />
+
+          <Route
+            path="/register"
+            element={
+              <PublicRoute>
+                <Register />
+              </PublicRoute>
+            }
+          />
+
+          <Route
+            path="/onboarding"
+            element={
+              <PrivateRoute>
+                <Onboarding />
+              </PrivateRoute>
+            }
+          />
+
+          {/* Protected Layout Routes */}
+          <Route
+            element={
+              <PrivateRoute>
+                <Layout />
+              </PrivateRoute>
+            }
+          >
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/projects/:id" element={<ProjectDetails />} />
+          </Route>
+
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
+  );
+}
+
+export default App;
