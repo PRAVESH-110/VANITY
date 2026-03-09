@@ -15,6 +15,7 @@ const flowRoutes = require("./routes/flowRoutes");
 const progressRoutes = require("./routes/progressRoutes");
 const userRoutes = require("./routes/userRoutes");
 const apiKeyRoutes = require("./routes/apiKeyRoutes");
+const campaignRoutes = require("./routes/campaignRoutes");
 const errorMiddleware = require("./middleware/errorMiddleware");
 
 /* ===============================
@@ -63,6 +64,7 @@ app.use("/api/flow", flowRoutes);
 app.use("/api/progress", progressRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/api-keys", apiKeyRoutes);
+app.use("/api/campaigns", campaignRoutes);
 
 /* ===============================
    ERROR HANDLER (MUST BE LAST)

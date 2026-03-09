@@ -8,7 +8,7 @@ const {
 } = require("../controllers/campaignController");
 
 router.post("/", authMiddleware, createCampaign);
-router.post("/launch", authMiddleware, launchCampaign);
 router.get("/", authMiddleware, getCampaigns);
+router.post("/:id/launch", authMiddleware, launchCampaign);
 
 module.exports = router;

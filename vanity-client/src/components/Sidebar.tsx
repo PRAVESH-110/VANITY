@@ -3,16 +3,31 @@ import { NavLink } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { useAuth } from "../hooks/useAuth";
 
-const NAV_ITEMS = [
-    { to: "/dashboard", icon: "⚡", label: "Projects" },
-    { to: "/analytics", icon: "📊", label: "Analytics" },
-    { to: "/api-keys", icon: "🔑", label: "API Keys" },
-    { to: "/settings", icon: "⚙️", label: "Settings" },
-];
+const NAV_ITEMS_BY_ROLE: Record<string, Array<{ to: string; icon: string; label: string }>> = {
+    developer: [
+        { to: "/dashboard", icon: "⚡", label: "Projects" },
+        { to: "/api-keys", icon: "🔑", label: "API Keys" },
+        { to: "/analytics", icon: "📊", label: "Analytics" },
+        { to: "/settings", icon: "⚙️", label: "Settings" },
+    ],
+    founder: [
+        { to: "/dashboard", icon: "⚡", label: "Projects" },
+        { to: "/analytics", icon: "📊", label: "Analytics" },
+        { to: "/settings", icon: "⚙️", label: "Settings" },
+    ],
+    marketer: [
+        { to: "/campaigns", icon: "📢", label: "Campaigns" },
+        { to: "/analytics", icon: "📊", label: "Analytics" },
+        { to: "/settings", icon: "⚙️", label: "Settings" },
+    ],
+};
 
 export default function Sidebar() {
     const { user } = useContext(AuthContext);
     const { handleLogout } = useAuth();
+
+    const role = user?.role || "developer";
+    const navItems = NAV_ITEMS_BY_ROLE[role] || NAV_ITEMS_BY_ROLE.developer;
 
     const getRoleEmoji = (role: string) =>
         ({ developer: "🛠", founder: "🚀", marketer: "🎯" }[role] || "👤");
@@ -24,7 +39,7 @@ export default function Sidebar() {
             </NavLink>
 
             <nav style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
-                {NAV_ITEMS.map((item) => (
+                {navItems.map((item) => (
                     <NavLink
                         key={item.to}
                         to={item.to}

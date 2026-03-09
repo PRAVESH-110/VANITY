@@ -15,14 +15,22 @@ exports.createCampaign = async (req, res) => {
   }
 };
 
+exports.getCampaigns = async (req, res) => {
+  const campaigns = await Campaign.find({ userId: req.user.id });
+  res.json(campaigns);
+};
+
 exports.launchCampaign = async (req, res) => {
   try {
+    const { id } = req.params;
+    
     const campaign = await Campaign.findOne({
+      _id: id,
       userId: req.user.id,
     });
 
     if (!campaign) {
-      return res.status(404).json({ error: "No campaign found" });
+      return res.status(404).json({ error: "Campaign not found" });
     }
 
     campaign.status = "launched";
@@ -32,9 +40,4 @@ exports.launchCampaign = async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: "Failed to launch campaign" });
   }
-};
-
-exports.getCampaigns = async (req, res) => {
-  const campaigns = await Campaign.find({ userId: req.user.id });
-  res.json(campaigns);
 };
