@@ -86,65 +86,102 @@ export default function ProjectDetails() {
   /* =========================
      STATUS COLORS
   ========================== */
-  const getStatusColor = (status: string) => {
+  const getStatusBadge = (status: string) => {
     switch (status) {
       case "deployed":
-        return "bg-green-100 text-green-800";
+        return "badge badge-green";
       case "building":
       case "deploying":
-        return "bg-yellow-100 text-yellow-800";
+        return "badge badge-yellow";
       case "failed":
-        return "bg-red-100 text-red-800";
+        return "badge badge-yellow";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "badge badge-yellow";
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin h-10 w-10 border-b-2 border-blue-600 rounded-full"></div>
+      <div style={{ 
+        minHeight: "100vh", 
+        background: "var(--bg-primary)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center"
+      }}>
+        <div style={{
+          width: 40,
+          height: 40,
+          border: "3px solid var(--border)",
+          borderTopColor: "var(--accent)",
+          borderRadius: "50%",
+          animation: "spin 1s linear infinite"
+        }} />
       </div>
     );
   }
 
   if (!project) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p>Project not found</p>
+      <div style={{ 
+        minHeight: "100vh", 
+        background: "var(--bg-primary)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center"
+      }}>
+        <p style={{ color: "var(--text-secondary)" }}>Project not found</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div style={{ minHeight: "100vh", background: "var(--bg-primary)", padding: 32 }}>
       <button
         onClick={() => navigate(-1)}
-        className="mb-6 text-blue-600 hover:underline"
+        style={{
+          background: "none",
+          border: "none",
+          color: "var(--accent-light)",
+          cursor: "pointer",
+          fontSize: "0.9rem",
+          marginBottom: 24,
+          padding: 0,
+          display: "flex",
+          alignItems: "center",
+          gap: 8
+        }}
       >
         ← Back
       </button>
 
-      <div className="bg-white rounded-xl shadow-lg p-8">
-
+      <div className="glass-card" style={{ padding: 32 }}>
         {/* HEADER */}
-        <div className="flex justify-between items-center mb-6">
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
           <div>
-            <h1 className="text-3xl font-bold">{project.name}</h1>
+            <h1 style={{ 
+              fontSize: "1.8rem", 
+              fontWeight: 800, 
+              color: "var(--text-primary)", 
+              marginBottom: 8 
+            }}>
+              {project.name}
+            </h1>
             <a
               href={project.repoUrl}
               target="_blank"
-              className="text-blue-600 text-sm"
+              rel="noopener noreferrer"
+              style={{
+                color: "var(--accent-light)",
+                fontSize: "0.875rem",
+                textDecoration: "none"
+              }}
             >
               {project.repoUrl}
             </a>
           </div>
 
-          <span
-            className={`px-4 py-2 rounded-full text-sm font-semibold ${getStatusColor(
-              project.status
-            )}`}
-          >
+          <span className={getStatusBadge(project.status)}>
             {project.status}
           </span>
         </div>
@@ -153,15 +190,15 @@ export default function ProjectDetails() {
         <DeploymentTimeline status={project.status} />
 
         {/* DEPLOY BUTTON */}
-        <div className="mt-8">
+        <div style={{ marginTop: 32 }}>
           <button
             onClick={handleDeploy}
             disabled={deploying || project.status === "building" || project.status === "deploying"}
-            className={`px-6 py-3 rounded-lg text-white font-semibold ${
-              deploying
-                ? "bg-gray-400"
-                : "bg-blue-600 hover:bg-blue-700"
-            }`}
+            className="btn-primary"
+            style={{
+              opacity: deploying ? 0.5 : 1,
+              cursor: deploying ? "not-allowed" : "pointer"
+            }}
           >
             {deploying ? "Deploying..." : "🚀 Deploy Project"}
           </button>
@@ -169,20 +206,51 @@ export default function ProjectDetails() {
 
         {/* DEPLOY KEY */}
         {project.deployKey && (
-          <div className="mt-8">
-            <h3 className="font-semibold mb-2">Deploy Key</h3>
-            <div className="bg-gray-900 text-green-400 p-4 rounded font-mono text-sm">
+          <div style={{ marginTop: 32 }}>
+            <h3 style={{ 
+              fontWeight: 600, 
+              color: "var(--text-primary)", 
+              marginBottom: 12 
+            }}>
+              Deploy Key
+            </h3>
+            <div style={{ 
+              background: "var(--bg-surface)", 
+              border: "1px solid var(--border)",
+              color: "#6ee7b7", 
+              padding: 16, 
+              borderRadius: 10, 
+              fontFamily: "monospace", 
+              fontSize: "0.85rem",
+              overflow: "auto"
+            }}>
               {project.deployKey}
             </div>
           </div>
         )}
 
         {/* DEPLOYMENT LOGS */}
-        <div className="mt-8">
-          <h3 className="font-semibold mb-2">Live Logs</h3>
-          <div className="bg-black text-green-400 p-4 rounded font-mono text-sm">
+        <div style={{ marginTop: 32 }}>
+          <h3 style={{ 
+            fontWeight: 600, 
+            color: "var(--text-primary)", 
+            marginBottom: 12 
+          }}>
+            Live Logs
+          </h3>
+          <div style={{ 
+            background: "var(--bg-surface)", 
+            border: "1px solid var(--border)",
+            color: "#6ee7b7", 
+            padding: 16, 
+            borderRadius: 10, 
+            fontFamily: "monospace", 
+            fontSize: "0.85rem",
+            maxHeight: 200,
+            overflow: "auto"
+          }}>
             {project.deploymentLogs?.length === 0 ? (
-              <p>No logs yet.</p>
+              <p style={{ color: "var(--text-muted)" }}>No logs yet.</p>
             ) : (
               project.deploymentLogs.map((log, index) => (
                 <div key={index}>{log}</div>
@@ -192,22 +260,38 @@ export default function ProjectDetails() {
         </div>
 
         {/* DEPLOYMENT HISTORY */}
-        <div className="mt-10">
-          <h3 className="font-semibold mb-4">Deployment History</h3>
+        <div style={{ marginTop: 40 }}>
+          <h3 style={{ 
+            fontWeight: 600, 
+            color: "var(--text-primary)", 
+            marginBottom: 16 
+          }}>
+            Deployment History
+          </h3>
 
           {history.length === 0 ? (
-            <p className="text-gray-500 text-sm">
+            <p style={{ color: "var(--text-muted)", fontSize: "0.875rem" }}>
               No previous deployments.
             </p>
           ) : (
-            <div className="space-y-3">
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               {history.map((item) => (
                 <div
                   key={item._id}
-                  className="bg-gray-100 p-4 rounded flex justify-between text-sm"
+                  style={{ 
+                    background: "var(--bg-surface)", 
+                    border: "1px solid var(--border)",
+                    padding: 16, 
+                    borderRadius: 10, 
+                    display: "flex", 
+                    justifyContent: "space-between",
+                    fontSize: "0.875rem"
+                  }}
                 >
-                  <span>{item.status}</span>
-                  <span>
+                  <span style={{ color: "var(--text-primary)" }}>
+                    {item.status === "deployed" ? "✓ Deployed" : "⏳ Failed"}
+                  </span>
+                  <span style={{ color: "var(--text-muted)" }}>
                     {new Date(item.deployedAt).toLocaleString()}
                   </span>
                 </div>
@@ -215,8 +299,8 @@ export default function ProjectDetails() {
             </div>
           )}
         </div>
-
       </div>
     </div>
   );
 }
+

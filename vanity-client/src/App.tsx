@@ -6,6 +6,9 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Onboarding from "./pages/Onboarding";
 import Dashboard from "./pages/Dashboard";
+import Analytics from "./pages/Analytics";
+import ApiKeys from "./pages/ApiKeys";
+import Settings from "./pages/Settings";
 import ProjectDetails from "./pages/ProjectDetails";
 import Layout from "./components/Layout";
 
@@ -65,6 +68,9 @@ function App() {
             }
           >
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/analytics" element={<Analytics />} />
+            <Route path="/api-keys" element={<ApiKeys />} />
+            <Route path="/settings" element={<Settings />} />
             <Route path="/projects/:id" element={<ProjectDetails />} />
           </Route>
 

@@ -1,13 +1,9 @@
-import { useEffect, useState, useContext } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import axios from "../api/axios";
-import { AuthContext } from "../context/AuthContext";
-import { useAuth } from "../hooks/useAuth";
+import Sidebar from "../components/Sidebar";
 
 export default function Dashboard() {
-  const { user } = useContext(AuthContext);
-  const { handleLogout } = useAuth();
-
   const [projects, setProjects] = useState<any[]>([]);
   const [filtered, setFiltered] = useState<any[]>([]);
 
@@ -76,61 +72,9 @@ export default function Dashboard() {
   const deployedCount = projects.filter((p) => p.status === "deployed").length;
   const createdCount = projects.filter((p) => p.status === "created").length;
 
-  const getRoleEmoji = (role: string) => ({ developer: "🛠", founder: "🚀", marketer: "🎯" }[role] || "👤");
-
   return (
     <div className="app-layout">
-      {/* Sidebar */}
-      <aside className="sidebar">
-        <div style={{ marginBottom: 32 }}>
-          <span className="logo-text">VANITY</span>
-        </div>
-
-        <nav style={{ flex: 1 }}>
-          <a href="#" className="nav-item active">
-            <span>⚡</span> Projects
-          </a>
-          <a href="#" className="nav-item">
-            <span>📊</span> Analytics
-          </a>
-          <a href="#" className="nav-item">
-            <span>🔑</span> API Keys
-          </a>
-          <a href="#" className="nav-item">
-            <span>⚙️</span> Settings
-          </a>
-        </nav>
-
-        {/* User info */}
-        <div style={{ borderTop: "1px solid var(--border)", paddingTop: 16 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-            <div style={{
-              width: 36, height: 36, borderRadius: "50%",
-              background: "linear-gradient(135deg, var(--accent), var(--accent-light))",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: "0.85rem", fontWeight: 700, color: "white",
-            }}>
-              {user?.email?.[0]?.toUpperCase()}
-            </div>
-            <div>
-              <p style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--text-primary)" }}>
-                {getRoleEmoji(user?.role)} {user?.role || "user"}
-              </p>
-              <p style={{ fontSize: "0.7rem", color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 140 }}>
-                {user?.email}
-              </p>
-            </div>
-          </div>
-          <button
-            id="logout-btn"
-            className="btn-secondary"
-            style={{ width: "100%", padding: "8px 16px", fontSize: "0.8rem" }}
-            onClick={handleLogout}
-          >
-            ← Sign Out
-          </button>
-        </div>
-      </aside>
+      <Sidebar />
 
       {/* Main */}
       <main className="main-content">
