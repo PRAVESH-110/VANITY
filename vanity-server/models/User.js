@@ -6,6 +6,7 @@ const userSchema = new mongoose.Schema(
     password: { type: String, required: true },
     role: { type: String },
     goal: { type: String },
+    segment: { type: String },
     onboardingCompleted: { type: Boolean, default: false },
   },
   { timestamps: true }

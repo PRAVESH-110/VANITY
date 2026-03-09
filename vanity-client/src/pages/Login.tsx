@@ -1,88 +1,93 @@
-import { useState, useContext } from "react";
-import axios from "../api/axios";
-import { useNavigate, Link } from "react-router-dom";
-import { AuthContext } from "../context/AuthContext";
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth";
 
 export default function Login() {
-  const navigate = useNavigate();
-  const { login } = useContext(AuthContext);
+  const { handleLogin } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
-
     try {
-      const res = await axios.post("/auth/login", {
-        email,
-        password,
-      });
-
-      login(res.data.token, res.data.user);
-
-      // Redirect based on onboarding status
-      if (res.data.user.onboardingCompleted) {
-        navigate("/dashboard");
-      } else {
-        navigate("/onboarding");
-      }
+      await handleLogin(email, password);
     } catch (err: any) {
-      setError(err.response?.data?.error || "Login failed");
+      setError(err.response?.data?.message || "Login failed. Check your credentials.");
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white shadow-lg rounded-lg p-8 w-96">
-        <h2 className="text-2xl font-semibold mb-6 text-center">
-          Login to VANITY
-        </h2>
+    <div className="auth-bg">
+      <div className="auth-card animate-fade-in">
 
-        {error && (
-          <div className="bg-red-100 text-red-600 p-2 rounded mb-4 text-sm">
-            {error}
+        {/* Logo */}
+        <div className="text-center mb-8">
+          <span className="logo-text">VANITY</span>
+          <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", marginTop: 6 }}>
+            Startup Onboarding & Activation Engine
+          </p>
+        </div>
+
+        <h1 style={{ fontSize: "1.4rem", fontWeight: 700, marginBottom: 6, color: "var(--text-primary)" }}>
+          Welcome back
+        </h1>
+        <p style={{ color: "var(--text-secondary)", fontSize: "0.875rem", marginBottom: 28 }}>
+          Sign in to continue to your dashboard
+        </p>
+
+        {error && <div className="alert-error" style={{ marginBottom: 20 }}>{error}</div>}
+
+        <form onSubmit={handleSubmit}>
+          <div style={{ marginBottom: 16 }}>
+            <label className="form-label">Email address</label>
+            <input
+              id="login-email"
+              type="email"
+              className="input-field"
+              placeholder="you@company.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
           </div>
-        )}
 
-        <form onSubmit={handleLogin}>
-          <input
-            type="email"
-            placeholder="Email"
-            className="border p-2 w-full mb-3 rounded"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-
-          <input
-            type="password"
-            placeholder="Password"
-            className="border p-2 w-full mb-4 rounded"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
+          <div style={{ marginBottom: 24 }}>
+            <label className="form-label">Password</label>
+            <input
+              id="login-password"
+              type="password"
+              className="input-field"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
 
           <button
+            id="login-submit"
             type="submit"
+            className="btn-primary"
             disabled={loading}
-            className="bg-blue-600 text-white w-full py-2 rounded hover:bg-blue-700 transition"
+            style={{ width: "100%" }}
           >
-            {loading ? "Logging in..." : "Login"}
+            {loading ? "Signing in..." : "Sign In →"}
           </button>
         </form>
 
-        <p className="text-sm text-center mt-4">
-          Don’t have an account?{" "}
-          <Link to="/register" className="text-blue-600 font-medium">
-            Register
+        <div className="divider" />
+
+        <p style={{ textAlign: "center", color: "var(--text-secondary)", fontSize: "0.875rem" }}>
+          Don't have an account?{" "}
+          <Link to="/register" style={{ color: "var(--accent-light)", fontWeight: 600, textDecoration: "none" }}>
+            Create one free
           </Link>
         </p>
       </div>

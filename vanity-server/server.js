@@ -11,6 +11,9 @@ require("dotenv").config();
 const authRoutes = require("./routes/authRoutes");
 const projectRoutes = require("./routes/projectRoutes");
 const webhookRoutes = require("./routes/webhookRoutes");
+const flowRoutes = require("./routes/flowRoutes");
+const progressRoutes = require("./routes/progressRoutes");
+const userRoutes = require("./routes/userRoutes");
 const errorMiddleware = require("./middleware/errorMiddleware");
 
 /* ===============================
@@ -23,14 +26,14 @@ const server = http.createServer(app);
    SOCKET.IO SETUP
 ================================= */
 const io = new Server(server, {
-  cors: {
-    origin: "http://localhost:5173",
-    methods: ["GET", "POST", "DELETE"],
-  },
+   cors: {
+      origin: "http://localhost:5173",
+      methods: ["GET", "POST", "DELETE"],
+   },
 });
 
 io.on("connection", (socket) => {
-  console.log("🔌 Client connected:", socket.id);
+   console.log("🔌 Client connected:", socket.id);
 });
 
 app.set("io", io);
@@ -46,7 +49,7 @@ app.use(express.urlencoded({ extended: true }));
    BASIC TEST ROUTE (IMPORTANT)
 ================================= */
 app.get("/", (req, res) => {
-  res.send("Server is running ✅");
+   res.send("Server is running ✅");
 });
 
 /* ===============================
@@ -55,6 +58,9 @@ app.get("/", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api/webhooks", webhookRoutes);
+app.use("/api/flow", flowRoutes);
+app.use("/api/progress", progressRoutes);
+app.use("/api/user", userRoutes);
 
 /* ===============================
    ERROR HANDLER (MUST BE LAST)
@@ -65,10 +71,10 @@ app.use(errorMiddleware);
    DATABASE CONNECTION
 ================================= */
 mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("✅ MongoDB Connected"))
-  .catch((err) => {
-    console.error("❌ MongoDB Connection Error:", err.message);
-  });
+   .then(() => console.log("✅ MongoDB Connected"))
+   .catch((err) => {
+      console.error("❌ MongoDB Connection Error:", err.message);
+   });
 
 /* ===============================
    START SERVER (IMPORTANT)
@@ -76,5 +82,5 @@ mongoose.connect(process.env.MONGO_URI)
 const PORT = 5000; // force fixed port
 
 server.listen(5000, "0.0.0.0", () => {
-  console.log("🚀 Server running on port 5000");
+   console.log("🚀 Server running on port 5000");
 });

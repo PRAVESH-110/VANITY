@@ -2,9 +2,11 @@ import { useEffect, useState, useContext } from "react";
 import { Link } from "react-router-dom";
 import axios from "../api/axios";
 import { AuthContext } from "../context/AuthContext";
+import { useAuth } from "../hooks/useAuth";
 
 export default function Dashboard() {
-  const { user, logout } = useContext(AuthContext);
+  const { user } = useContext(AuthContext);
+  const { handleLogout } = useAuth();
 
   const [projects, setProjects] = useState<any[]>([]);
   const [filtered, setFiltered] = useState<any[]>([]);
@@ -17,344 +19,267 @@ export default function Dashboard() {
   const [name, setName] = useState("");
   const [repoUrl, setRepoUrl] = useState("");
   const [error, setError] = useState("");
+  const [creating, setCreating] = useState(false);
 
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  /* =============================
-     LOAD PROJECTS
-  ============================= */
+  /* ─── Load Projects ─── */
   const loadProjects = async () => {
-    const res = await axios.get("/projects");
-    setProjects(res.data);
+    try {
+      const res = await axios.get("/projects");
+      setProjects(res.data);
+    } catch {
+      // silent
+    }
   };
 
-  useEffect(() => {
-    loadProjects();
-  }, []);
+  useEffect(() => { loadProjects(); }, []);
 
-  /* =============================
-     SEARCH + FILTER + SORT
-  ============================= */
+  /* ─── Filter + Sort ─── */
   useEffect(() => {
     let temp = [...projects];
-
-    if (search) {
-      temp = temp.filter((p) =>
-        p.name.toLowerCase().includes(search.toLowerCase())
-      );
-    }
-
-    if (filterStatus !== "all") {
-      temp = temp.filter((p) => p.status === filterStatus);
-    }
-
-    if (sortOrder === "newest") {
-      temp.sort(
-        (a, b) =>
-          new Date(b.createdAt).getTime() -
-          new Date(a.createdAt).getTime()
-      );
-    } else {
-      temp.sort(
-        (a, b) =>
-          new Date(a.createdAt).getTime() -
-          new Date(b.createdAt).getTime()
-      );
-    }
-
+    if (search) temp = temp.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()));
+    if (filterStatus !== "all") temp = temp.filter((p) => p.status === filterStatus);
+    if (sortOrder === "newest") temp.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    else temp.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
     setFiltered(temp);
   }, [projects, search, filterStatus, sortOrder]);
 
-  /* =============================
-     VALIDATION
-  ============================= */
-  const isValidGitHubUrl = (url: string) => {
-    const githubRegex = /^https:\/\/github\.com\/[\w-]+\/[\w-]+$/;
-    return githubRegex.test(url);
-  };
+  const isValidGitHubUrl = (url: string) => /^https:\/\/github\.com\/[\w-]+\/[\w-]+$/.test(url);
 
-  /* =============================
-     CREATE PROJECT
-  ============================= */
+  /* ─── Create Project ─── */
   const handleCreateProject = async () => {
     setError("");
-
-    if (!name || !repoUrl) {
-      setError("All fields are required.");
-      return;
-    }
-
-    if (!isValidGitHubUrl(repoUrl)) {
-      setError("Invalid GitHub repository URL.");
-      return;
-    }
-
+    if (!name || !repoUrl) { setError("All fields are required."); return; }
+    if (!isValidGitHubUrl(repoUrl)) { setError("Enter a valid GitHub URL: https://github.com/username/repo"); return; }
+    setCreating(true);
     try {
-      await axios.post("/projects", {
-        name,
-        repoUrl,
-        environment: "development",
-      });
-
-      setName("");
-      setRepoUrl("");
-      setShowModal(false);
+      await axios.post("/projects", { name, repoUrl, environment: "development" });
+      setName(""); setRepoUrl(""); setShowModal(false);
       loadProjects();
     } catch (err: any) {
-      setError(
-        err?.response?.data?.error ||
-          "Project creation failed."
-      );
+      setError(err?.response?.data?.error || "Project creation failed.");
+    } finally {
+      setCreating(false);
     }
   };
 
-  /* =============================
-     DELETE PROJECT
-  ============================= */
+  /* ─── Delete Project ─── */
   const confirmDelete = async () => {
     if (!deleteId) return;
-
     await axios.delete(`/projects/${deleteId}`);
     setDeleteId(null);
     loadProjects();
   };
 
-  /* =============================
-     ANALYTICS
-  ============================= */
   const totalProjects = projects.length;
-  const deployedCount = projects.filter(
-    (p) => p.status === "deployed"
-  ).length;
-  const createdCount = projects.filter(
-    (p) => p.status === "created"
-  ).length;
+  const deployedCount = projects.filter((p) => p.status === "deployed").length;
+  const createdCount = projects.filter((p) => p.status === "created").length;
+
+  const getRoleEmoji = (role: string) => ({ developer: "🛠", founder: "🚀", marketer: "🎯" }[role] || "👤");
 
   return (
-    <div>
-
-      {/* HEADER */}
-      <div className="flex justify-between items-center mb-8">
-
-        <div>
-          <h1 className="text-3xl font-bold">
-            Projects
-          </h1>
-          <p className="text-gray-500 text-sm">
-            Welcome, {user.email}
-          </p>
+    <div className="app-layout">
+      {/* Sidebar */}
+      <aside className="sidebar">
+        <div style={{ marginBottom: 32 }}>
+          <span className="logo-text">VANITY</span>
         </div>
 
-        <div className="flex gap-3">
+        <nav style={{ flex: 1 }}>
+          <a href="#" className="nav-item active">
+            <span>⚡</span> Projects
+          </a>
+          <a href="#" className="nav-item">
+            <span>📊</span> Analytics
+          </a>
+          <a href="#" className="nav-item">
+            <span>🔑</span> API Keys
+          </a>
+          <a href="#" className="nav-item">
+            <span>⚙️</span> Settings
+          </a>
+        </nav>
+
+        {/* User info */}
+        <div style={{ borderTop: "1px solid var(--border)", paddingTop: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: "50%",
+              background: "linear-gradient(135deg, var(--accent), var(--accent-light))",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: "0.85rem", fontWeight: 700, color: "white",
+            }}>
+              {user?.email?.[0]?.toUpperCase()}
+            </div>
+            <div>
+              <p style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--text-primary)" }}>
+                {getRoleEmoji(user?.role)} {user?.role || "user"}
+              </p>
+              <p style={{ fontSize: "0.7rem", color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 140 }}>
+                {user?.email}
+              </p>
+            </div>
+          </div>
           <button
+            id="logout-btn"
+            className="btn-secondary"
+            style={{ width: "100%", padding: "8px 16px", fontSize: "0.8rem" }}
+            onClick={handleLogout}
+          >
+            ← Sign Out
+          </button>
+        </div>
+      </aside>
+
+      {/* Main */}
+      <main className="main-content">
+        {/* Header */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 32 }}>
+          <div>
+            <h1 style={{ fontSize: "1.8rem", fontWeight: 800, color: "var(--text-primary)", marginBottom: 4 }}>
+              Projects
+            </h1>
+            <p style={{ color: "var(--text-secondary)", fontSize: "0.875rem" }}>
+              Manage and deploy your repositories
+            </p>
+          </div>
+          <button
+            id="new-project-btn"
+            className="btn-primary"
             onClick={() => setShowModal(true)}
-            className="bg-blue-600 text-white px-5 py-2 rounded hover:bg-blue-700 transition"
           >
             + New Project
           </button>
-
-          <button
-            onClick={logout}
-            className="bg-red-500 text-white px-5 py-2 rounded"
-          >
-            Logout
-          </button>
         </div>
 
-      </div>
-
-      {/* ANALYTICS */}
-      <div className="grid grid-cols-3 gap-4 mb-8">
-
-        <div className="bg-white p-5 rounded shadow">
-          <p className="text-sm text-gray-500">
-            Total Projects
-          </p>
-          <h2 className="text-2xl font-bold">
-            {totalProjects}
-          </h2>
+        {/* Stats */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 32 }}>
+          <div className="stat-card">
+            <p style={{ color: "var(--text-muted)", fontSize: "0.75rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
+              Total Projects
+            </p>
+            <p style={{ color: "var(--text-primary)", fontSize: "2rem", fontWeight: 800 }}>{totalProjects}</p>
+          </div>
+          <div className="stat-card">
+            <p style={{ color: "var(--text-muted)", fontSize: "0.75rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
+              Deployed
+            </p>
+            <p style={{ color: "var(--success)", fontSize: "2rem", fontWeight: 800 }}>{deployedCount}</p>
+          </div>
+          <div className="stat-card">
+            <p style={{ color: "var(--text-muted)", fontSize: "0.75rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
+              In Progress
+            </p>
+            <p style={{ color: "var(--warning)", fontSize: "2rem", fontWeight: 800 }}>{createdCount}</p>
+          </div>
         </div>
 
-        <div className="bg-white p-5 rounded shadow">
-          <p className="text-sm text-gray-500">
-            Deployed
-          </p>
-          <h2 className="text-2xl font-bold text-green-600">
-            {deployedCount}
-          </h2>
+        {/* Controls */}
+        <div style={{ display: "flex", gap: 12, marginBottom: 24 }}>
+          <input
+            type="text"
+            placeholder="🔍  Search projects..."
+            className="input-field"
+            style={{ maxWidth: 280 }}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <select className="select-field" style={{ maxWidth: 160 }} value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
+            <option value="all">All Status</option>
+            <option value="deployed">Deployed</option>
+            <option value="created">Created</option>
+          </select>
+          <select className="select-field" style={{ maxWidth: 140 }} value={sortOrder} onChange={(e) => setSortOrder(e.target.value)}>
+            <option value="newest">Newest</option>
+            <option value="oldest">Oldest</option>
+          </select>
         </div>
 
-        <div className="bg-white p-5 rounded shadow">
-          <p className="text-sm text-gray-500">
-            Created
-          </p>
-          <h2 className="text-2xl font-bold text-yellow-600">
-            {createdCount}
-          </h2>
-        </div>
-
-      </div>
-
-      {/* CONTROLS */}
-      <div className="flex gap-4 mb-6">
-        <input
-          type="text"
-          placeholder="Search projects..."
-          className="border p-2 rounded w-60"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-
-        <select
-          className="border p-2 rounded"
-          value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value)}
-        >
-          <option value="all">All</option>
-          <option value="deployed">Deployed</option>
-          <option value="created">Created</option>
-        </select>
-
-        <select
-          className="border p-2 rounded"
-          value={sortOrder}
-          onChange={(e) => setSortOrder(e.target.value)}
-        >
-          <option value="newest">Newest</option>
-          <option value="oldest">Oldest</option>
-        </select>
-      </div>
-
-      {/* PROJECT LIST */}
-      {filtered.length === 0 ? (
-        <div className="bg-white p-6 rounded shadow text-gray-600">
-          No projects found.
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {filtered.map((project) => (
-            <div
-              key={project._id}
-              className="bg-white p-6 rounded shadow hover:shadow-lg transition border"
-            >
-              <div className="flex justify-between items-center">
-
-                <Link to={`/projects/${project._id}`}>
-                  <div>
-                    <h3 className="font-semibold text-lg">
+        {/* Project List */}
+        {filtered.length === 0 ? (
+          <div className="glass-card" style={{ padding: 48, textAlign: "center" }}>
+            <div style={{ fontSize: "3rem", marginBottom: 16 }}>📂</div>
+            <h3 style={{ color: "var(--text-primary)", marginBottom: 8 }}>No projects yet</h3>
+            <p style={{ color: "var(--text-secondary)", marginBottom: 24 }}>Create your first project to get started</p>
+            <button className="btn-primary" onClick={() => setShowModal(true)}>+ New Project</button>
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {filtered.map((project) => (
+              <div
+                key={project._id}
+                className="glass-card"
+                style={{ padding: "20px 24px", borderRadius: 14 }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <Link to={`/projects/${project._id}`} style={{ textDecoration: "none" }}>
+                    <h3 style={{ color: "var(--text-primary)", fontWeight: 600, marginBottom: 4, fontSize: "1rem" }}>
                       {project.name}
                     </h3>
-                    <p className="text-sm text-gray-600">
-                      {project.repoUrl}
-                    </p>
+                    <p style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>{project.repoUrl}</p>
+                  </Link>
+
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <span className={`badge ${project.status === "deployed" ? "badge-green" : "badge-yellow"}`}>
+                      {project.status === "deployed" ? "✓ Deployed" : "⏳ Created"}
+                    </span>
+                    <button
+                      onClick={() => setDeleteId(project._id)}
+                      style={{ background: "none", border: "none", color: "var(--error)", cursor: "pointer", fontSize: "0.8rem", padding: "4px 8px" }}
+                    >
+                      Delete
+                    </button>
                   </div>
-                </Link>
-
-                <div className="flex items-center gap-4">
-
-                  <span
-                    className={`px-3 py-1 text-xs rounded-full ${
-                      project.status === "deployed"
-                        ? "bg-green-100 text-green-700"
-                        : "bg-yellow-100 text-yellow-700"
-                    }`}
-                  >
-                    {project.status}
-                  </span>
-
-                  <button
-                    onClick={() => setDeleteId(project._id)}
-                    className="text-red-500 text-sm"
-                  >
-                    Delete
-                  </button>
-
                 </div>
+              </div>
+            ))}
+          </div>
+        )}
 
+        {/* Create Modal */}
+        {showModal && (
+          <div className="modal-backdrop">
+            <div className="modal-box">
+              <h3 style={{ fontSize: "1.2rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: 24 }}>
+                Create New Project
+              </h3>
+              <div style={{ marginBottom: 16 }}>
+                <label className="form-label">Project Name</label>
+                <input id="project-name" type="text" className="input-field" placeholder="My Awesome App" value={name} onChange={(e) => setName(e.target.value)} />
+              </div>
+              <div style={{ marginBottom: 16 }}>
+                <label className="form-label">GitHub Repository URL</label>
+                <input id="project-repo" type="text" className="input-field" placeholder="https://github.com/username/repo" value={repoUrl} onChange={(e) => setRepoUrl(e.target.value)} />
+              </div>
+              {error && <div className="alert-error" style={{ marginBottom: 16 }}>{error}</div>}
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 12 }}>
+                <button className="btn-secondary" onClick={() => { setShowModal(false); setError(""); }}>Cancel</button>
+                <button id="project-create-btn" className="btn-primary" onClick={handleCreateProject} disabled={creating}>
+                  {creating ? "Creating..." : "Create Project"}
+                </button>
               </div>
             </div>
-          ))}
-        </div>
-      )}
+          </div>
+        )}
 
-      {/* CREATE MODAL */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center">
-
-          <div className="bg-white p-6 rounded-xl w-96 shadow-xl">
-
-            <h3 className="text-xl font-semibold mb-4">
-              Create New Project
-            </h3>
-
-            <input
-              type="text"
-              placeholder="Project Name"
-              className="border p-3 w-full mb-3 rounded"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-
-            <input
-              type="text"
-              placeholder="https://github.com/username/repo"
-              className="border p-3 w-full mb-3 rounded"
-              value={repoUrl}
-              onChange={(e) => setRepoUrl(e.target.value)}
-            />
-
-            {error && (
-              <p className="text-red-500 text-sm mb-2">
-                {error}
+        {/* Delete Confirmation */}
+        {deleteId && (
+          <div className="modal-backdrop">
+            <div className="modal-box" style={{ maxWidth: 360, textAlign: "center" }}>
+              <div style={{ fontSize: "2.5rem", marginBottom: 16 }}>🗑️</div>
+              <h3 style={{ color: "var(--text-primary)", marginBottom: 8 }}>Delete Project?</h3>
+              <p style={{ color: "var(--text-secondary)", fontSize: "0.875rem", marginBottom: 24 }}>
+                This action cannot be undone. The project and all its data will be permanently removed.
               </p>
-            )}
-
-            <div className="flex justify-end gap-2 mt-4">
-              <button
-                onClick={() => setShowModal(false)}
-              >
-                Cancel
-              </button>
-
-              <button
-                onClick={handleCreateProject}
-                className="bg-blue-600 text-white px-4 py-2 rounded"
-              >
-                Create
-              </button>
-            </div>
-
-          </div>
-
-        </div>
-      )}
-
-      {/* DELETE CONFIRMATION */}
-      {deleteId && (
-        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center">
-
-          <div className="bg-white p-6 rounded shadow w-80">
-            <h3 className="text-lg font-semibold mb-4">
-              Confirm Delete
-            </h3>
-
-            <div className="flex justify-end gap-3">
-              <button onClick={() => setDeleteId(null)}>
-                Cancel
-              </button>
-
-              <button
-                onClick={confirmDelete}
-                className="bg-red-500 text-white px-3 py-1 rounded"
-              >
-                Delete
-              </button>
+              <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
+                <button className="btn-secondary" onClick={() => setDeleteId(null)}>Cancel</button>
+                <button className="btn-primary" style={{ background: "var(--error)" }} onClick={confirmDelete}>Delete</button>
+              </div>
             </div>
           </div>
-
-        </div>
-      )}
-
+        )}
+      </main>
     </div>
   );
 }

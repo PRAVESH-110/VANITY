@@ -9,6 +9,7 @@ const stepSchema = new mongoose.Schema(
     },
     type: { type: String, required: true }, // info, form, action
     title: { type: String, required: true },
+    description: { type: String, default: "" },
     order: { type: Number, required: true },
     completionCondition: { type: String },
   },
