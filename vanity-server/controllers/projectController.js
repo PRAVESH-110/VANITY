@@ -4,6 +4,7 @@ const asyncHandler = require("../utils/asyncHandler");
 const {
   createProjectService,
   deployProjectService,
+  checkDeploymentStatus,
 } = require("../services/projectService");
 
 /* ===============================
@@ -57,6 +58,18 @@ exports.deployProject = asyncHandler(async (req, res) => {
     req.user.id,
     req.body.projectId,
     io
+  );
+
+  res.json(result);
+});
+
+/* ===============================
+   CHECK DEPLOYMENT STATUS
+================================= */
+exports.checkStatus = asyncHandler(async (req, res) => {
+  const result = await checkDeploymentStatus(
+    req.user.id,
+    req.params.id
   );
 
   res.json(result);

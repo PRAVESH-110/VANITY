@@ -11,6 +11,8 @@ import ApiKeys from "./pages/ApiKeys";
 import Settings from "./pages/Settings";
 import ProjectDetails from "./pages/ProjectDetails";
 import Campaigns from "./pages/Campaigns";
+import Team from "./pages/Team";
+import Milestones from "./pages/Milestones";
 import Layout from "./components/Layout";
 
 /* 🔐 Private Route */
@@ -74,6 +76,8 @@ function App() {
             <Route path="/settings" element={<Settings />} />
             <Route path="/projects/:id" element={<ProjectDetails />} />
             <Route path="/campaigns" element={<Campaigns />} />
+            <Route path="/team" element={<Team />} />
+            <Route path="/roadmap" element={<Milestones />} />
           </Route>
 
         </Routes>

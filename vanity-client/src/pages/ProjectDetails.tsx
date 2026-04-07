@@ -29,31 +29,56 @@ export default function ProjectDetails() {
   const [history, setHistory] = useState<DeploymentHistory[]>([]);
   const [loading, setLoading] = useState(true);
   const [deploying, setDeploying] = useState(false);
+  const [checking, setChecking] = useState(false);
 
   /* =========================
-     FETCH PROJECT
+     FETCH PROJECT (basic data)
   ========================== */
   const fetchProject = async () => {
     const res = await axios.get("/projects");
     const found = res.data.find((p: Project) => p._id === id);
     setProject(found || null);
     setLoading(false);
+    return found;
+  };
+
+  /* =========================
+     CHECK REAL STATUS FROM GITHUB
+  ========================== */
+  const checkStatus = async () => {
+    setChecking(true);
+    try {
+      const res = await axios.get(`/projects/${id}/check-status`);
+      setProject(res.data);
+    } catch (err) {
+      console.error("Status check failed", err);
+    }
+    setChecking(false);
   };
 
   /* =========================
      FETCH DEPLOYMENT HISTORY
   ========================== */
   const fetchHistory = async () => {
-    const res = await axios.get(`/projects/${id}/history`);
-    setHistory(res.data);
+    try {
+      const res = await axios.get(`/projects/${id}/history`);
+      setHistory(res.data);
+    } catch {}
   };
 
   /* =========================
-     SOCKET REAL-TIME
+     SOCKET REAL-TIME + INITIAL LOAD
   ========================== */
   useEffect(() => {
-    fetchProject();
-    fetchHistory();
+    const init = async () => {
+      const found = await fetchProject();
+      fetchHistory();
+      // Auto-check real status from GitHub on load
+      if (found) {
+        await checkStatus();
+      }
+    };
+    init();
 
     const socket = io("http://localhost:5000");
 
@@ -94,7 +119,7 @@ export default function ProjectDetails() {
       case "deploying":
         return "badge badge-yellow";
       case "failed":
-        return "badge badge-yellow";
+        return "badge badge-red";
       default:
         return "badge badge-yellow";
     }
@@ -181,51 +206,80 @@ export default function ProjectDetails() {
             </a>
           </div>
 
-          <span className={getStatusBadge(project.status)}>
-            {project.status}
-          </span>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span className={getStatusBadge(project.status)}>
+              {project.status === "failed" ? "✗ FAILED" : project.status.toUpperCase()}
+            </span>
+            {checking && (
+              <span style={{ color: "var(--text-muted)", fontSize: "0.75rem", fontStyle: "italic" }}>
+                Syncing with GitHub...
+              </span>
+            )}
+          </div>
         </div>
 
         {/* DEPLOYMENT TIMELINE */}
         <DeploymentTimeline status={project.status} />
 
-        {/* DEPLOY BUTTON */}
-        <div style={{ marginTop: 32 }}>
+        {/* ACTION BUTTONS */}
+        <div style={{ marginTop: 32, display: "flex", alignItems: "center", gap: 12 }}>
           <button
             onClick={handleDeploy}
-            disabled={deploying || project.status === "building" || project.status === "deploying"}
+            disabled={deploying || checking}
             className="btn-primary"
             style={{
-              opacity: deploying ? 0.5 : 1,
-              cursor: deploying ? "not-allowed" : "pointer"
+              opacity: (deploying || checking) ? 0.5 : 1,
+              cursor: (deploying || checking) ? "not-allowed" : "pointer"
             }}
           >
-            {deploying ? "Deploying..." : "🚀 Deploy Project"}
+            {deploying || checking
+              ? "Checking GitHub..."
+              : "🔄 Check Deploy Status"}
           </button>
+          <button
+            onClick={checkStatus}
+            disabled={checking}
+            className="btn-secondary"
+            style={{ padding: "12px 20px", fontSize: "0.875rem" }}
+          >
+            ↻ Refresh
+          </button>
+          {project.status === "created" && (
+            <span style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>
+              Set up deployment in your GitHub repo first
+            </span>
+          )}
         </div>
 
-        {/* DEPLOY KEY */}
-        {project.deployKey && (
+        {/* LIVE URL */}
+        {project.deployKey && project.status === "deployed" && (
           <div style={{ marginTop: 32 }}>
-            <h3 style={{ 
-              fontWeight: 600, 
-              color: "var(--text-primary)", 
-              marginBottom: 12 
+            <h3 style={{
+              fontWeight: 600,
+              color: "var(--text-primary)",
+              marginBottom: 12
             }}>
-              Deploy Key
+              🔗 Live URL
             </h3>
-            <div style={{ 
-              background: "var(--bg-surface)", 
-              border: "1px solid var(--border)",
-              color: "#6ee7b7", 
-              padding: 16, 
-              borderRadius: 10, 
-              fontFamily: "monospace", 
-              fontSize: "0.85rem",
-              overflow: "auto"
-            }}>
-              {project.deployKey}
-            </div>
+            <a
+              href={project.deployKey}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: "inline-block",
+                background: "var(--bg-surface)",
+                border: "1px solid var(--border)",
+                color: "#6ee7b7",
+                padding: 16,
+                borderRadius: 10,
+                fontFamily: "monospace",
+                fontSize: "0.85rem",
+                textDecoration: "none",
+                transition: "all 0.2s",
+              }}
+            >
+              {project.deployKey} ↗
+            </a>
           </div>
         )}
 

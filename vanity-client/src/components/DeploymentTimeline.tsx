@@ -10,24 +10,49 @@ const STAGES = [
 ];
 
 export default function DeploymentTimeline({ status }: Props) {
-  const currentIndex = STAGES.findIndex((s) => s.key === status);
+  const isFailed = status === "failed";
+  const currentIndex = isFailed ? -1 : STAGES.findIndex((s) => s.key === status);
 
   return (
     <div style={{ padding: "24px 0" }}>
+
+      {/* Failed banner */}
+      {isFailed && (
+        <div style={{
+          background: "rgba(239, 68, 68, 0.1)",
+          border: "1px solid rgba(239, 68, 68, 0.3)",
+          borderRadius: 10,
+          padding: "12px 16px",
+          marginBottom: 20,
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+        }}>
+          <span style={{ fontSize: "1.1rem" }}>❌</span>
+          <span style={{ color: "#ef4444", fontSize: "0.85rem", fontWeight: 600 }}>
+            Deployment failed — check logs below for details
+          </span>
+        </div>
+      )}
+
       {/* Pipeline */}
       <div style={{ display: "flex", alignItems: "center", position: "relative" }}>
         {STAGES.map((stage, i) => {
-          const isDone = i < currentIndex;
-          const isActive = i === currentIndex;
-          const isPending = i > currentIndex;
+          const isDone = !isFailed && i < currentIndex;
+          const isActive = !isFailed && i === currentIndex;
+          const isPending = isFailed || i > currentIndex;
 
-          const dotColor = isDone
+          const dotColor = isFailed
+            ? "var(--border)"
+            : isDone
             ? "#10b981"
             : isActive
             ? stage.color
             : "var(--border)";
 
-          const labelColor = isDone
+          const labelColor = isFailed
+            ? "var(--text-muted)"
+            : isDone
             ? "var(--text-secondary)"
             : isActive
             ? "var(--text-primary)"
@@ -103,7 +128,6 @@ export default function DeploymentTimeline({ status }: Props) {
             </div>
           );
         })}
-
 
       </div>
     </div>

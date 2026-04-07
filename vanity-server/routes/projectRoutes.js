@@ -10,6 +10,7 @@ const {
   getProjects,
   deleteProject,
   deployProject,
+  checkStatus,
 } = require("../controllers/projectController");
 
 /* ========================= */
@@ -17,6 +18,7 @@ router.post("/", authMiddleware, createProject);
 router.get("/", authMiddleware, getProjects);
 router.delete("/:id", authMiddleware, deleteProject);
 router.post("/deploy", authMiddleware, deployProject);
+router.get("/:id/check-status", authMiddleware, checkStatus);
 
 /* =========================
    GET DEPLOYMENT HISTORY

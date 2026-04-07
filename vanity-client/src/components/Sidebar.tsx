@@ -12,6 +12,8 @@ const NAV_ITEMS_BY_ROLE: Record<string, Array<{ to: string; icon: string; label:
     ],
     founder: [
         { to: "/dashboard", icon: "⚡", label: "Projects" },
+        { to: "/team", icon: "👥", label: "Team" },
+        { to: "/roadmap", icon: "🗺", label: "Roadmap" },
         { to: "/analytics", icon: "📊", label: "Analytics" },
         { to: "/settings", icon: "⚙️", label: "Settings" },
     ],
